@@ -1,8 +1,6 @@
-package util
+package minesweeper
 
-import (
-	"regexp"
-)
+import "regexp"
 
 var ansiEscapeCodes = `\x1B\[[0-?]*[ -/]*[@-~]`
 var ansiRegex = regexp.MustCompile(ansiEscapeCodes)

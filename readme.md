@@ -9,13 +9,43 @@ Before getting started I recommend checking out the start flags by running `<bin
 The game provides a simple command-line interface for playing Minesweeper. The board is displayed as a grid of cells, with row and column numbers as labels. The game supports the following commands:
 
 - `r <row> <col>`: Reveal the cell at the specified row and column.
+- `c <col> <row>`: Reveal the cell at the specified column and row
 - `f <row> <col>`: Toggle a flag on or off at the specified row and column.
-- `h`, `help`, `imlost`: Display the help message with a list of commands.
 - `header`: Hide or show the header information.
 - `footer`: Hide or show the footer information.
 - `q`, `quit`, `exit`: Quit the game.
+- `h`, `help`, `imlost`: Display the help message with a list of commands.
 
 The game continues until all non-mine cells are revealed or a mine is revealed.
+
+## Start flags
+
+### Game options
+
+- `-rows <int>`: Number of rows (default: 10)
+- `-cols <int>`: Number of columns (default: 10)
+- `-mines <int>`: Number of mines (default: 10)
+- `-seed <int64>`: Seed for random number generator (default: current Unix timestamp in nanoseconds)
+
+### Display options
+
+- `-start <int>`: Start index (row and column start at this index, default: 1)
+- `-ansi=<true|false>`: Use ANSI escape codes to color the board (default: true)
+
+### Help
+
+- `-h / -help`: Show help (default: false)
+
+### Debug
+
+- `-clear=<true|false>`: Automatically clear the screen (default: true)
+
+### Example usage
+
+1. `minesweeper -rows 10 -cols 20 -mines 30`
+2. `minesweeper -h`
+3. `minesweeper -ansi=false -clear=false -seed 50`
+4. `minesweeper -rows 30 -ansi=false`
 
 ## Download prebuild package
 

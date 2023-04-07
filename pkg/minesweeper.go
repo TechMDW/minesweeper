@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"math/rand"
 	"reflect"
-
-	"github.com/TechMDW/minesweeper/internal/util"
 )
 
 // Cell represents a cell in a minesweeper board.
@@ -295,13 +293,13 @@ func (b *Board) Display(showMines bool) {
 
 func (b *Board) Printf(format string, a ...any) {
 	if !*b.DisplayOptions.ANSI {
-		format = util.RemoveAnsiEscapeCodes(format)
+		format = RemoveAnsiEscapeCodes(format)
 
 		for i, v := range a {
 			t := reflect.TypeOf(v)
 
 			if t.Kind() == reflect.String {
-				a[i] = util.RemoveAnsiEscapeCodes(v.(string))
+				a[i] = RemoveAnsiEscapeCodes(v.(string))
 			} else {
 				a[i] = v
 			}
@@ -317,7 +315,7 @@ func (b *Board) Print(a ...any) {
 			t := reflect.TypeOf(v)
 
 			if t.Kind() == reflect.String {
-				a[i] = util.RemoveAnsiEscapeCodes(v.(string))
+				a[i] = RemoveAnsiEscapeCodes(v.(string))
 			} else {
 				a[i] = v
 			}
@@ -333,7 +331,7 @@ func (b *Board) Println(a ...any) {
 			t := reflect.TypeOf(v)
 
 			if t.Kind() == reflect.String {
-				a[i] = util.RemoveAnsiEscapeCodes(v.(string))
+				a[i] = RemoveAnsiEscapeCodes(v.(string))
 			} else {
 				a[i] = v
 			}
