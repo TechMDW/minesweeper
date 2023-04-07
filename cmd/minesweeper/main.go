@@ -186,9 +186,15 @@ func main() {
 			footer = !footer
 		case "header":
 			header = !header
+		case "ansi":
+			board.DisplayOptions.ANSI = util.BoolPtr(!*board.DisplayOptions.ANSI)
 		case "cheat":
 			board.RevealAll()
 			gameOver = true
+		case "restart":
+			board = minesweeper.NewBoard(*rows, *cols, *mines, boardOptions, displayOptions)
+
+			startTime = time.Now()
 		case "q", "quit", "exit":
 			gameOver = true
 		default:
@@ -223,4 +229,26 @@ func main() {
 	fmt.Println("Cells revealed:", cellsRevealed)
 	fmt.Println("Cells left:", cellNonRevealed)
 	fmt.Println("Flags:", flagCount)
+
+	// ALlow user to restart or quit
+	fmt.Println("Enter command: (r = retry same seed, q = quit)")
+
+	if !scanner.Scan() {
+		fmt.Println("Error reading input.")
+
+		return
+	}
+
+	input := scanner.Text()
+
+	command := strings.ToLower(input)
+
+	switch command {
+	case "r", "restart":
+		main()
+	case "q", "quit", "exit":
+		return
+	default:
+		fmt.Println("BYE!")
+	}
 }
