@@ -172,8 +172,10 @@ func main() {
 			if board.Reveal(col, row) {
 				gameOver = true
 			}
-		case "f":
+		case "f", "fr", "rf":
 			board.ToggleFlag(row, col)
+		case "fc", "cf":
+			board.ToggleFlag(col, row)
 		case "h", "help", "imlost":
 			if *clear {
 				fmt.Println(dClear)
