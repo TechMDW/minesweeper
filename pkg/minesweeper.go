@@ -224,66 +224,48 @@ func (b *Board) Display(showMines bool) {
 	}
 
 	for c := 0; c < b.Cols; c++ {
-		b.Printf("\x1b[34m%2d\x1b[0m ", c+startIndex) // Blue color for column numbers
-		// fmt.Printf("\x1b[34m%2d\x1b[0m ", c+startIndex) // Blue color for column numbers
+		b.Printf("\x1b[34m%2d\x1b[0m ", c+startIndex)
 	}
 
 	// Print new line after the top row
 	fmt.Println()
 
 	for r := 0; r < b.Rows; r++ {
-		b.Printf("\x1b[34m%2d\x1b[0m| ", r+startIndex) // Blue color for row numbers
-		// fmt.Printf("\x1b[34m%2d\x1b[0m| ", r+startIndex) // Blue color for row numbers
+		b.Printf("\x1b[34m%2d\x1b[0m| ", r+startIndex)
 
 		for c := 0; c < b.Cols; c++ {
 			cell := b.Cells[r][c]
 
 			if cell.IsRevealed {
 				if cell.IsMine {
-					b.Printf("\x1b[41m%s\x1b[0m%s", sMine, sSeperator) // Bg Red
-					// fmt.Printf("\x1b[41m%s\x1b[0m%s", sMine, sSeperator) // Bg Red
-					// fmt.Print("X  ")
+					b.Printf("\x1b[41m%s\x1b[0m%s", sMine, sSeperator)
 				} else {
 					switch cell.MinesAround {
 					case 1:
-						b.Printf("\x1b[94m%d\x1b[0m  ", cell.MinesAround) // Light red
-						// fmt.Printf("\x1b[94m%d\x1b[0m  ", cell.MinesAround) // Light red
+						b.Printf("\x1b[94m%d\x1b[0m  ", cell.MinesAround)
 					case 2:
-						b.Printf("\x1b[32m%d\x1b[0m  ", cell.MinesAround) // Yellow
-						// fmt.Printf("\x1b[32m%d\x1b[0m  ", cell.MinesAround) // Yellow
+						b.Printf("\x1b[32m%d\x1b[0m  ", cell.MinesAround)
 					case 3:
-						b.Printf("\x1b[31m%d\x1b[0m  ", cell.MinesAround) // Bright yellow
-						// fmt.Printf("\x1b[31m%d\x1b[0m  ", cell.MinesAround) // Bright yellow
+						b.Printf("\x1b[31m%d\x1b[0m  ", cell.MinesAround)
 					case 4:
-						b.Printf("\x1b[34m%d\x1b[0m  ", cell.MinesAround) // Light green
-						// fmt.Printf("\x1b[34m%d\x1b[0m  ", cell.MinesAround) // Light green
+						b.Printf("\x1b[34m%d\x1b[0m  ", cell.MinesAround)
 					case 5:
-						b.Printf("\x1b[33m%d\x1b[0m  ", cell.MinesAround) // Green
-						// fmt.Printf("\x1b[33m%d\x1b[0m  ", cell.MinesAround) // Green
+						b.Printf("\x1b[33m%d\x1b[0m  ", cell.MinesAround)
 					case 6:
-						b.Printf("\x1b[36m%d\x1b[0m  ", cell.MinesAround) // Light cyan
-						// fmt.Printf("\x1b[36m%d\x1b[0m  ", cell.MinesAround) // Light cyan
+						b.Printf("\x1b[36m%d\x1b[0m  ", cell.MinesAround)
 					case 7:
-						b.Printf("\x1b[30m%d\x1b[0m  ", cell.MinesAround) // Cyan
-						// fmt.Printf("\x1b[30m%d\x1b[0m  ", cell.MinesAround) // Cyan
+						b.Printf("\x1b[30m%d\x1b[0m  ", cell.MinesAround)
 					default:
-						b.Printf("\x1b[90m%d\x1b[0m  ", cell.MinesAround) // Grey
-						// fmt.Printf("\x1b[90m%d\x1b[0m  ", cell.MinesAround) // Grey
+						b.Printf("\x1b[90m%d\x1b[0m  ", cell.MinesAround)
 					}
 				}
 			} else {
 				if showMines && cell.IsMine {
-					b.Printf("\x1b[41m%s\x1b[0m%s", sMine, sSeperator) // Bg Red
-					// fmt.Printf("\x1b[41m%s\x1b[0m%s", sMine, sSeperator) // Bg Red
-					// fmt.Print("X  ")
+					b.Printf("\x1b[41m%s\x1b[0m%s", sMine, sSeperator)
 				} else if cell.IsFlagged {
 					b.Printf("\x1b[91m%s\x1b[0m%s", sFlag, sSeperator)
-					// fmt.Printf("\x1b[91m%s\x1b[0m%s", sFlag, sSeperator)
-					// fmt.Print("F  ")
 				} else {
 					b.Printf("\x1b[37m%s\x1b[0m%s", sHidden, sSeperator)
-					// fmt.Printf("\x1b[37m%s\x1b[0m%s", sHidden, sSeperator)
-					// fmt.Print("•  ")
 				}
 			}
 		}

@@ -154,11 +154,10 @@ func main() {
 			continue
 		}
 
-		// Convert to lowercase
 		command = strings.ToLower(command)
 
 		if startIndex != nil {
-			// Convert user input to 0-based index
+			// Convert to 0-based index
 			row -= *startIndex
 			col -= *startIndex
 		}
@@ -193,9 +192,7 @@ func main() {
 		case "q", "quit", "exit":
 			gameOver = true
 		default:
-			// Invalid command with red bg and white text
 			board.Printf("\x1b[41;37m%s\x1b[0m\n", "Invalid command!")
-			// fmt.Printf("\x1b[41;37m%s\x1b[0m\n", "Invalid command!")
 		}
 	}
 
@@ -213,11 +210,9 @@ func main() {
 	fmt.Println()
 
 	if percentage == 1 {
-		board.Printf("\x1b[32m%s\x1b[0m\n", "You won!") // Green color
-		// fmt.Printf("\x1b[32m%s\x1b[0m\n", "You won!") // Green color
+		board.Printf("\x1b[32m%s\x1b[0m\n", "You won!")
 	} else {
-		board.Printf("\x1b[31m%s\x1b[0m\n", "You lost!") // Red color
-		// fmt.Printf("\x1b[31m%s\x1b[0m\n", "You lost!") // Red color
+		board.Printf("\x1b[31m%s\x1b[0m\n", "You lost!")
 	}
 
 	fmt.Printf("You completed %d/%d cells in %s (%.2f%%)\n\n", cellsRevealed, cellsRevealed+cellNonRevealed, util.FormatDuration(time.Since(startTime)), percentage*100)
