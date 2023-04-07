@@ -111,7 +111,7 @@ func main() {
 
 		log.Println("clear:", *clear)
 		if *clear {
-			// fmt.Println(dClear)
+			fmt.Println(dClear)
 		}
 
 		percentageDone := board.RevealedPercentage()
