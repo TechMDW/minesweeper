@@ -3,7 +3,6 @@ package minesweeper
 import (
 	"fmt"
 	"math/rand"
-	"time"
 )
 
 // Cell represents a cell in a minesweeper board.
@@ -20,10 +19,11 @@ type Board struct {
 	Cols     int
 	NumMines int
 	Cells    [][]Cell
+	Rand     *rand.Rand
 }
 
 // privateRand is a private random number generator
-var privateRand = rand.New(rand.NewSource(time.Now().UnixNano()))
+// var privateRand = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 // Symbols used to display the board
 var (
@@ -37,15 +37,21 @@ const (
 	dStartIndex = 1
 )
 
+type BoardOptions struct {
+	Seed int64
+}
+
 // NewBoard creates a new board with the given number of rows, columns, and mines.
 //
 // The board is initialized with all cells hidden and no mines placed.
-func NewBoard(rows, cols, numMines int) *Board {
+func NewBoard(rows, cols, numMines int, options *BoardOptions) *Board {
 	board := &Board{
 		Rows:     rows,
 		Cols:     cols,
 		NumMines: numMines,
 		Cells:    make([][]Cell, rows),
+
+		Rand: rand.New(rand.NewSource(options.Seed)),
 	}
 
 	for i := 0; i < rows; i++ {
@@ -61,8 +67,8 @@ func NewBoard(rows, cols, numMines int) *Board {
 func (b *Board) placeMines() {
 	for i := 0; i < b.NumMines; i++ {
 		for {
-			row := privateRand.Intn(b.Rows)
-			col := privateRand.Intn(b.Cols)
+			row := b.Rand.Intn(b.Rows)
+			col := b.Rand.Intn(b.Cols)
 
 			if !b.Cells[row][col].IsMine {
 				b.Cells[row][col].IsMine = true

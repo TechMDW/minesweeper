@@ -58,6 +58,7 @@ func main() {
 	cols := flags.Int("cols", 10, "Number of columns")
 	mines := flags.Int("mines", 10, "Number of mines")
 	startIndex := flags.Int("start", 1, "Start index (row and column start at this index)")
+	seed := flags.Int64("seed", time.Now().UnixNano(), "Seed for random number generator")
 	clear := flags.Bool("clear", true, "Automatically clear the screen")
 
 	showHelp := flags.Bool("help", false, "Show help")
@@ -79,7 +80,11 @@ func main() {
 		StartIndex: startIndex,
 	}
 
-	board := minesweeper.NewBoard(*rows, *cols, *mines)
+	boardOptions := &minesweeper.BoardOptions{
+		Seed: *seed,
+	}
+
+	board := minesweeper.NewBoard(*rows, *cols, *mines, boardOptions)
 
 	gameOver := false
 	inHelp := false
@@ -101,11 +106,17 @@ func main() {
 			fmt.Println(dClear)
 		}
 
+		percentageDone := board.RevealedPercentage()
+
+		if percentageDone == 1 {
+			break
+		}
+
 		if header {
 			fmt.Println("Cells left: ", board.CellsNonRevealed())
 			fmt.Println("Flags: ", board.FlagsCount())
 			fmt.Println("Mines: ", board.NumMines)
-			fmt.Println(" ", util.FormatPercentageBar(board.RevealedPercentage(), *cols*3-2))
+			fmt.Println(" ", util.FormatPercentageBar(percentageDone, *cols*3-2))
 		}
 
 		board.Display(false, displayOptions)
