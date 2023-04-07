@@ -49,7 +49,7 @@ The game continues until all non-mine cells are revealed or a mine is revealed.
 
 ## Download prebuild package
 
-1. Download the latest version of Minesweeper from the [GitHub releases page](https://github.com/myusername/minesweeper/releases/latest).
+1. Download the latest version of Minesweeper from the [GitHub releases page](https://github.com/TechMDW/minesweeper/releases/latest).
 2. Open your terminal.
 3. Navigate to the directory where they downloaded the file `cd <path>` (Linux/macOS/Windows).
 4. Run the game binary with `./minesweeper` (Linux/macOS) or `minesweeper.exe` (Windows).
@@ -69,7 +69,7 @@ To install and run the game, you need to have the [Go](https://go.dev/dl/) insta
    OR
 
    `go install github.com/TechMDW/minesweeper/cmd/minesweeper@<version>`
-   This will download a specific version if you replace the `<version>` with an avalible [releases](https://github.com/myusername/minesweeper/releases)
+   This will download a specific version if you replace the `<version>` with an available [releases](https://github.com/TechMDW/minesweeper/releases)
 
 3. Once installation is complete, you can run the Minesweeper CLI from anywhere in your terminal by typing:
    `minesweeper`
