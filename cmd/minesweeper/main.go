@@ -95,6 +95,7 @@ func main() {
 
 	gameOver := false
 	inHelp := false
+	manualQuit := false
 	footer := true
 	header := true
 
@@ -146,6 +147,7 @@ func main() {
 
 		var command string
 		var row, col int
+		var sIndex int
 
 		// Parse user input
 		_, err := fmt.Sscanf(input, "%s %d %d", &command, &row, &col)
@@ -154,13 +156,17 @@ func main() {
 			continue
 		}
 
-		// Convert to lowercase
 		command = strings.ToLower(command)
 
+		// Quick workaround for now
+		if command == "start" {
+			sIndex = row
+		}
+
 		if startIndex != nil {
-			// Convert user input to 0-based index
-			row -= *startIndex
-			col -= *startIndex
+			// Convert to 0-based index
+			row -= *board.DisplayOptions.StartIndex
+			col -= *board.DisplayOptions.StartIndex
 		}
 
 		switch command {
@@ -187,18 +193,26 @@ func main() {
 			footer = !footer
 		case "header":
 			header = !header
+		case "ansi":
+			board.DisplayOptions.ANSI = util.BoolPtr(!*board.DisplayOptions.ANSI)
+		case "start":
+			board.DisplayOptions.StartIndex = util.IntPtr(sIndex)
 		case "cheat":
 			board.RevealAll()
 			gameOver = true
+		case "restart":
+			board = minesweeper.NewBoard(*rows, *cols, *mines, boardOptions, displayOptions)
+
+			startTime = time.Now()
 		case "q", "quit", "exit":
 			gameOver = true
+			manualQuit = true
 		default:
-			// Invalid command with red bg and white text
 			board.Printf("\x1b[41;37m%s\x1b[0m\n", "Invalid command!")
-			// fmt.Printf("\x1b[41;37m%s\x1b[0m\n", "Invalid command!")
 		}
 	}
 
+	gameDuration := time.Since(startTime)
 	cellNonRevealed := board.CellsNonRevealed()
 	cellsRevealed := board.CellsRevealed()
 	flagCount := board.FlagsCount()
@@ -213,14 +227,12 @@ func main() {
 	fmt.Println()
 
 	if percentage == 1 {
-		board.Printf("\x1b[32m%s\x1b[0m\n", "You won!") // Green color
-		// fmt.Printf("\x1b[32m%s\x1b[0m\n", "You won!") // Green color
+		board.Printf("\x1b[32m%s\x1b[0m\n", "You won!")
 	} else {
-		board.Printf("\x1b[31m%s\x1b[0m\n", "You lost!") // Red color
-		// fmt.Printf("\x1b[31m%s\x1b[0m\n", "You lost!") // Red color
+		board.Printf("\x1b[31m%s\x1b[0m\n", "You lost!")
 	}
 
-	fmt.Printf("You completed %d/%d cells in %s (%.2f%%)\n\n", cellsRevealed, cellsRevealed+cellNonRevealed, util.FormatDuration(time.Since(startTime)), percentage*100)
+	fmt.Printf("You completed %d/%d cells in %s (%.2f%%)\n\n", cellsRevealed, cellsRevealed+cellNonRevealed, util.FormatDuration(gameDuration), percentage*100)
 
 	fmt.Printf("Size: %d X %d\n", *rows, *cols)
 	fmt.Println("Amount of cells:", *rows**cols)
@@ -228,4 +240,30 @@ func main() {
 	fmt.Println("Cells revealed:", cellsRevealed)
 	fmt.Println("Cells left:", cellNonRevealed)
 	fmt.Println("Flags:", flagCount)
+
+	if manualQuit {
+		return
+	}
+
+	// ALlow user to restart or quit
+	fmt.Println("Enter command: (r = retry same seed, q = quit)")
+
+	if !scanner.Scan() {
+		fmt.Println("Error reading input.")
+
+		return
+	}
+
+	input := scanner.Text()
+
+	command := strings.ToLower(input)
+
+	switch command {
+	case "r", "restart":
+		main()
+	case "q", "quit", "exit":
+		return
+	default:
+		fmt.Println("BYE!")
+	}
 }
