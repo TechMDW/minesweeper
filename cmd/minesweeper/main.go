@@ -95,6 +95,7 @@ func main() {
 
 	gameOver := false
 	inHelp := false
+	manualQuit := false
 	footer := true
 	header := true
 
@@ -146,6 +147,7 @@ func main() {
 
 		var command string
 		var row, col int
+		var sIndex int
 
 		// Parse user input
 		_, err := fmt.Sscanf(input, "%s %d %d", &command, &row, &col)
@@ -156,10 +158,15 @@ func main() {
 
 		command = strings.ToLower(command)
 
+		// Quick workaround for now
+		if command == "start" {
+			sIndex = row
+		}
+
 		if startIndex != nil {
 			// Convert to 0-based index
-			row -= *startIndex
-			col -= *startIndex
+			row -= *board.DisplayOptions.StartIndex
+			col -= *board.DisplayOptions.StartIndex
 		}
 
 		switch command {
@@ -188,6 +195,8 @@ func main() {
 			header = !header
 		case "ansi":
 			board.DisplayOptions.ANSI = util.BoolPtr(!*board.DisplayOptions.ANSI)
+		case "start":
+			board.DisplayOptions.StartIndex = util.IntPtr(sIndex)
 		case "cheat":
 			board.RevealAll()
 			gameOver = true
@@ -197,11 +206,13 @@ func main() {
 			startTime = time.Now()
 		case "q", "quit", "exit":
 			gameOver = true
+			manualQuit = true
 		default:
 			board.Printf("\x1b[41;37m%s\x1b[0m\n", "Invalid command!")
 		}
 	}
 
+	gameDuration := time.Since(startTime)
 	cellNonRevealed := board.CellsNonRevealed()
 	cellsRevealed := board.CellsRevealed()
 	flagCount := board.FlagsCount()
@@ -221,7 +232,7 @@ func main() {
 		board.Printf("\x1b[31m%s\x1b[0m\n", "You lost!")
 	}
 
-	fmt.Printf("You completed %d/%d cells in %s (%.2f%%)\n\n", cellsRevealed, cellsRevealed+cellNonRevealed, util.FormatDuration(time.Since(startTime)), percentage*100)
+	fmt.Printf("You completed %d/%d cells in %s (%.2f%%)\n\n", cellsRevealed, cellsRevealed+cellNonRevealed, util.FormatDuration(gameDuration), percentage*100)
 
 	fmt.Printf("Size: %d X %d\n", *rows, *cols)
 	fmt.Println("Amount of cells:", *rows**cols)
@@ -229,6 +240,10 @@ func main() {
 	fmt.Println("Cells revealed:", cellsRevealed)
 	fmt.Println("Cells left:", cellNonRevealed)
 	fmt.Println("Flags:", flagCount)
+
+	if manualQuit {
+		return
+	}
 
 	// ALlow user to restart or quit
 	fmt.Println("Enter command: (r = retry same seed, q = quit)")
