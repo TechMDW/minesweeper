@@ -3,6 +3,9 @@ package minesweeper
 import (
 	"fmt"
 	"math/rand"
+	"reflect"
+
+	"github.com/TechMDW/minesweeper/internal/util"
 )
 
 // Cell represents a cell in a minesweeper board.
@@ -20,6 +23,9 @@ type Board struct {
 	NumMines int
 	Cells    [][]Cell
 	Rand     *rand.Rand
+
+	BoardOptions   *BoardOptions
+	DisplayOptions *DisplayOptions
 }
 
 // privateRand is a private random number generator
@@ -41,17 +47,24 @@ type BoardOptions struct {
 	Seed int64
 }
 
+type DisplayOptions struct {
+	StartIndex *int
+	ANSI       *bool
+}
+
 // NewBoard creates a new board with the given number of rows, columns, and mines.
 //
 // The board is initialized with all cells hidden and no mines placed.
-func NewBoard(rows, cols, numMines int, options *BoardOptions) *Board {
+func NewBoard(rows, cols, numMines int, boardOptions *BoardOptions, displayOptions *DisplayOptions) *Board {
 	board := &Board{
 		Rows:     rows,
 		Cols:     cols,
 		NumMines: numMines,
 		Cells:    make([][]Cell, rows),
 
-		Rand: rand.New(rand.NewSource(options.Seed)),
+		Rand:           rand.New(rand.NewSource(boardOptions.Seed)),
+		BoardOptions:   boardOptions,
+		DisplayOptions: displayOptions,
 	}
 
 	for i := 0; i < rows; i++ {
@@ -203,71 +216,129 @@ func (b *Board) ToggleFlag(row, col int) {
 	}
 }
 
-type DisplayOptions struct {
-	StartIndex *int
-}
-
-func (b *Board) Display(showMines bool, options *DisplayOptions) {
+func (b *Board) Display(showMines bool) {
 	// Add padding to the left for the column numbers
 	fmt.Print("   ")
 
 	startIndex := dStartIndex
-	if options.StartIndex != nil {
-		startIndex = *options.StartIndex
+	if b.DisplayOptions.StartIndex != nil {
+		startIndex = *b.DisplayOptions.StartIndex
 	}
 
 	for c := 0; c < b.Cols; c++ {
-		// TODO: Replace with user start position
-		fmt.Printf("\x1b[34m%2d\x1b[0m ", c+startIndex) // Blue color for column numbers
+		b.Printf("\x1b[34m%2d\x1b[0m ", c+startIndex) // Blue color for column numbers
+		// fmt.Printf("\x1b[34m%2d\x1b[0m ", c+startIndex) // Blue color for column numbers
 	}
 
 	// Print new line after the top row
 	fmt.Println()
 
 	for r := 0; r < b.Rows; r++ {
-		// TODO: Replace with user start position
-		fmt.Printf("\x1b[34m%2d\x1b[0m| ", r+startIndex) // Blue color for row numbers
+		b.Printf("\x1b[34m%2d\x1b[0m| ", r+startIndex) // Blue color for row numbers
+		// fmt.Printf("\x1b[34m%2d\x1b[0m| ", r+startIndex) // Blue color for row numbers
 
 		for c := 0; c < b.Cols; c++ {
 			cell := b.Cells[r][c]
 
 			if cell.IsRevealed {
 				if cell.IsMine {
-					fmt.Printf("\x1b[41m%s\x1b[0m%s", sMine, sSeperator) // Bg Red
+					b.Printf("\x1b[41m%s\x1b[0m%s", sMine, sSeperator) // Bg Red
+					// fmt.Printf("\x1b[41m%s\x1b[0m%s", sMine, sSeperator) // Bg Red
 					// fmt.Print("X  ")
 				} else {
 					switch cell.MinesAround {
 					case 1:
-						fmt.Printf("\x1b[94m%d\x1b[0m  ", cell.MinesAround) // Light red
+						b.Printf("\x1b[94m%d\x1b[0m  ", cell.MinesAround) // Light red
+						// fmt.Printf("\x1b[94m%d\x1b[0m  ", cell.MinesAround) // Light red
 					case 2:
-						fmt.Printf("\x1b[32m%d\x1b[0m  ", cell.MinesAround) // Yellow
+						b.Printf("\x1b[32m%d\x1b[0m  ", cell.MinesAround) // Yellow
+						// fmt.Printf("\x1b[32m%d\x1b[0m  ", cell.MinesAround) // Yellow
 					case 3:
-						fmt.Printf("\x1b[31m%d\x1b[0m  ", cell.MinesAround) // Bright yellow
+						b.Printf("\x1b[31m%d\x1b[0m  ", cell.MinesAround) // Bright yellow
+						// fmt.Printf("\x1b[31m%d\x1b[0m  ", cell.MinesAround) // Bright yellow
 					case 4:
-						fmt.Printf("\x1b[34m%d\x1b[0m  ", cell.MinesAround) // Light green
+						b.Printf("\x1b[34m%d\x1b[0m  ", cell.MinesAround) // Light green
+						// fmt.Printf("\x1b[34m%d\x1b[0m  ", cell.MinesAround) // Light green
 					case 5:
-						fmt.Printf("\x1b[33m%d\x1b[0m  ", cell.MinesAround) // Green
+						b.Printf("\x1b[33m%d\x1b[0m  ", cell.MinesAround) // Green
+						// fmt.Printf("\x1b[33m%d\x1b[0m  ", cell.MinesAround) // Green
 					case 6:
-						fmt.Printf("\x1b[36m%d\x1b[0m  ", cell.MinesAround) // Light cyan
+						b.Printf("\x1b[36m%d\x1b[0m  ", cell.MinesAround) // Light cyan
+						// fmt.Printf("\x1b[36m%d\x1b[0m  ", cell.MinesAround) // Light cyan
 					case 7:
-						fmt.Printf("\x1b[30m%d\x1b[0m  ", cell.MinesAround) // Cyan
+						b.Printf("\x1b[30m%d\x1b[0m  ", cell.MinesAround) // Cyan
+						// fmt.Printf("\x1b[30m%d\x1b[0m  ", cell.MinesAround) // Cyan
 					default:
-						fmt.Printf("\x1b[90m%d\x1b[0m  ", cell.MinesAround) // Grey
+						b.Printf("\x1b[90m%d\x1b[0m  ", cell.MinesAround) // Grey
+						// fmt.Printf("\x1b[90m%d\x1b[0m  ", cell.MinesAround) // Grey
 					}
 				}
 			} else {
 				if showMines && cell.IsMine {
-					fmt.Printf("\x1b[41m%s\x1b[0m%s", sMine, sSeperator) // Bg Red
+					b.Printf("\x1b[41m%s\x1b[0m%s", sMine, sSeperator) // Bg Red
+					// fmt.Printf("\x1b[41m%s\x1b[0m%s", sMine, sSeperator) // Bg Red
 					// fmt.Print("X  ")
 				} else if cell.IsFlagged {
-					fmt.Printf("\x1b[91m%s\x1b[0m%s", sFlag, sSeperator)
+					b.Printf("\x1b[91m%s\x1b[0m%s", sFlag, sSeperator)
+					// fmt.Printf("\x1b[91m%s\x1b[0m%s", sFlag, sSeperator)
 					// fmt.Print("F  ")
 				} else {
-					fmt.Printf("\x1b[37m%s\x1b[0m%s", sHidden, sSeperator)
+					b.Printf("\x1b[37m%s\x1b[0m%s", sHidden, sSeperator)
+					// fmt.Printf("\x1b[37m%s\x1b[0m%s", sHidden, sSeperator)
 					// fmt.Print("•  ")
 				}
 			}
 		}
 		fmt.Println()
 	}
+}
+
+func (b *Board) Printf(format string, a ...any) {
+	if !*b.DisplayOptions.ANSI {
+		format = util.RemoveAnsiEscapeCodes(format)
+
+		for i, v := range a {
+			t := reflect.TypeOf(v)
+
+			if t.Kind() == reflect.String {
+				a[i] = util.RemoveAnsiEscapeCodes(v.(string))
+			} else {
+				a[i] = v
+			}
+		}
+	}
+
+	fmt.Printf(format, a...)
+}
+
+func (b *Board) Print(a ...any) {
+	if !*b.DisplayOptions.ANSI {
+		for i, v := range a {
+			t := reflect.TypeOf(v)
+
+			if t.Kind() == reflect.String {
+				a[i] = util.RemoveAnsiEscapeCodes(v.(string))
+			} else {
+				a[i] = v
+			}
+		}
+	}
+
+	fmt.Print(a...)
+}
+
+func (b *Board) Println(a ...any) {
+	if !*b.DisplayOptions.ANSI {
+		for i, v := range a {
+			t := reflect.TypeOf(v)
+
+			if t.Kind() == reflect.String {
+				a[i] = util.RemoveAnsiEscapeCodes(v.(string))
+			} else {
+				a[i] = v
+			}
+		}
+	}
+
+	fmt.Println(a...)
 }

@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"strings"
 	"time"
@@ -54,14 +55,19 @@ func printHelp() {
 func main() {
 	flags := flag.NewFlagSet("minesweeper", flag.ExitOnError)
 
+	// Game/Board options
 	rows := flags.Int("rows", 10, "Number of rows")
 	cols := flags.Int("cols", 10, "Number of columns")
 	mines := flags.Int("mines", 10, "Number of mines")
-	startIndex := flags.Int("start", 1, "Start index (row and column start at this index)")
 	seed := flags.Int64("seed", time.Now().UnixNano(), "Seed for random number generator")
-	clear := flags.Bool("clear", true, "Automatically clear the screen")
 
+	// Display options
+	startIndex := flags.Int("start", 1, "Start index (row and column start at this index)")
+	ansi := flags.Bool("ansi", true, "Use ANSI escape codes to color the board")
+
+	// Default/Debug options
 	showHelp := flags.Bool("help", false, "Show help")
+	clear := flags.Bool("clear", true, "Automatically clear the screen")
 
 	flags.Parse(os.Args[1:])
 
@@ -78,13 +84,14 @@ func main() {
 
 	displayOptions := &minesweeper.DisplayOptions{
 		StartIndex: startIndex,
+		ANSI:       ansi,
 	}
 
 	boardOptions := &minesweeper.BoardOptions{
 		Seed: *seed,
 	}
 
-	board := minesweeper.NewBoard(*rows, *cols, *mines, boardOptions)
+	board := minesweeper.NewBoard(*rows, *cols, *mines, boardOptions, displayOptions)
 
 	gameOver := false
 	inHelp := false
@@ -102,8 +109,9 @@ func main() {
 			inHelp = false
 		}
 
+		log.Println("clear:", *clear)
 		if *clear {
-			fmt.Println(dClear)
+			// fmt.Println(dClear)
 		}
 
 		percentageDone := board.RevealedPercentage()
@@ -119,7 +127,7 @@ func main() {
 			fmt.Println(" ", util.FormatPercentageBar(percentageDone, *cols*3-2))
 		}
 
-		board.Display(false, displayOptions)
+		board.Display(false)
 
 		if footer {
 			fmt.Println("Enter command: (r <row> <col> = reveal, f <row> <col> = flag, h = help)")
@@ -184,7 +192,8 @@ func main() {
 			gameOver = true
 		default:
 			// Invalid command with red bg and white text
-			fmt.Printf("\x1b[41;37m%s\x1b[0m\n", "Invalid command!")
+			board.Printf("\x1b[41;37m%s\x1b[0m\n", "Invalid command!")
+			// fmt.Printf("\x1b[41;37m%s\x1b[0m\n", "Invalid command!")
 		}
 	}
 
@@ -197,14 +206,16 @@ func main() {
 		fmt.Println(dClear)
 	}
 
-	board.Display(true, displayOptions)
+	board.Display(true)
 
 	fmt.Println()
 
 	if percentage == 1 {
-		fmt.Printf("\x1b[32m%s\x1b[0m\n", "You won!") // Green color
+		board.Printf("\x1b[32m%s\x1b[0m\n", "You won!") // Green color
+		// fmt.Printf("\x1b[32m%s\x1b[0m\n", "You won!") // Green color
 	} else {
-		fmt.Printf("\x1b[31m%s\x1b[0m\n", "You lost!") // Red color
+		board.Printf("\x1b[31m%s\x1b[0m\n", "You lost!") // Red color
+		// fmt.Printf("\x1b[31m%s\x1b[0m\n", "You lost!") // Red color
 	}
 
 	fmt.Printf("You completed %d/%d cells in %s (%.2f%%)\n\n", cellsRevealed, cellsRevealed+cellNonRevealed, util.FormatDuration(time.Since(startTime)), percentage*100)
