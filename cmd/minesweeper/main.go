@@ -232,8 +232,9 @@ func main() {
 		board.Printf("\x1b[31m%s\x1b[0m\n", "You lost!")
 	}
 
-	fmt.Printf("You completed %d/%d cells in %s (%.2f%%)\n\n", cellsRevealed, cellsRevealed+cellNonRevealed, util.FormatDuration(gameDuration), percentage*100)
-
+	fmt.Printf("You completed %d/%d cells in %s (%.2f%%)\n", cellsRevealed, cellsRevealed+cellNonRevealed, util.FormatDuration(gameDuration), percentage*100)
+	fmt.Println("Seed:", *seed)
+	fmt.Println("")
 	fmt.Printf("Size: %d X %d\n", *rows, *cols)
 	fmt.Println("Amount of cells:", *rows**cols)
 	fmt.Println("Mines:", *mines)
