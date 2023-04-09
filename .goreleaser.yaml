@@ -21,7 +21,6 @@ archives:
   - name_template: >-
       {{ .ProjectName }}_
       {{- if eq .Os "windows" }}{{ .Arch }}.exe{{ end }}
-      {{- else if eq .Os "linux" }}{{- title .Os }}
       {{- else }}{{- title .Os }}
       {{- if eq .Arch "amd64" }}x86_64
       {{- else if eq .Arch "386" }}i386
