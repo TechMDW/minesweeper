@@ -5,8 +5,8 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"log"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -14,10 +14,31 @@ import (
 	minesweeper "github.com/TechMDW/minesweeper/pkg"
 )
 
-var (
+const (
 	// Clear the display
 	dClear = "\033[H\033[2J"
 )
+
+type Config struct {
+	rows         int
+	cols         int
+	mines        int
+	footer       bool
+	header       bool
+	seed         int64
+	startIndex   int
+	ansi         bool
+	showHelp     bool
+	clear        bool
+	symbolMine   string
+	symbolFlag   string
+	symbolHidden string
+}
+
+type Command struct {
+	Action string
+	Args   []string
+}
 
 // printHelp prints the help message.
 func printHelp() {
@@ -50,9 +71,35 @@ func printHelp() {
 	fmt.Println()
 
 	fmt.Println("Just press ENTER(↵) to continue ...")
+
+	fmt.Scanln()
 }
 
-func main() {
+func printFooter(config *Config) {
+	if !config.footer {
+		fmt.Println("")
+		return
+	}
+
+	fmt.Println("Enter command: (r <row> <col> = reveal, f <row> <col> = flag, h = help)")
+}
+
+func printHeader(board *minesweeper.Board, config *Config) {
+	if !config.header {
+		return
+	}
+
+	percentageDone := board.RevealedPercentage()
+
+	if config.header {
+		fmt.Println("Cells left: ", board.CellsNonRevealed())
+		fmt.Println("Flags: ", board.FlagsCount())
+		fmt.Println("Mines: ", board.NumMines)
+		fmt.Println(" ", util.FormatPercentageBar(percentageDone, config.cols*3-2))
+	}
+}
+
+func parseFlags() *Config {
 	flags := flag.NewFlagSet("minesweeper", flag.ExitOnError)
 
 	// Game/Board options
@@ -60,10 +107,15 @@ func main() {
 	cols := flags.Int("cols", 10, "Number of columns")
 	mines := flags.Int("mines", 10, "Number of mines")
 	seed := flags.Int64("seed", time.Now().UnixNano(), "Seed for random number generator")
+	header := flags.Bool("header", true, "Show header")
+	footer := flags.Bool("footer", true, "Show footer")
 
 	// Display options
 	startIndex := flags.Int("start", 1, "Start index (row and column start at this index)")
 	ansi := flags.Bool("ansi", true, "Use ANSI escape codes to color the board")
+	symbolMine := flags.String("symbolMine", minesweeper.SymbolMine, "Symbol to use for mines")
+	symbolFlag := flags.String("symbolFlag", minesweeper.SymbolFlag, "Symbol to use for flags")
+	symbolHidden := flags.String("symbolHidden", minesweeper.SymbolHidden, "Symbol to use for hidden cells")
 
 	// Default/Debug options
 	showHelp := flags.Bool("help", false, "Show help")
@@ -71,154 +123,35 @@ func main() {
 
 	flags.Parse(os.Args[1:])
 
-	if *showHelp {
-		fmt.Println("Usage: minesweeper [OPTIONS]")
-		fmt.Println("Options:")
-		flags.PrintDefaults()
-		return
-	}
-
 	if *startIndex < 0 {
 		startIndex = util.IntPtr(0)
 	}
 
-	displayOptions := &minesweeper.DisplayOptions{
-		StartIndex: startIndex,
-		ANSI:       ansi,
+	return &Config{
+		rows:         *rows,
+		cols:         *cols,
+		mines:        *mines,
+		seed:         *seed,
+		startIndex:   *startIndex,
+		ansi:         *ansi,
+		showHelp:     *showHelp,
+		clear:        *clear,
+		header:       *header,
+		footer:       *footer,
+		symbolMine:   *symbolMine,
+		symbolFlag:   *symbolFlag,
+		symbolHidden: *symbolHidden,
 	}
+}
 
-	boardOptions := &minesweeper.BoardOptions{
-		Seed: *seed,
-	}
-
-	board := minesweeper.NewBoard(*rows, *cols, *mines, boardOptions, displayOptions)
-
-	gameOver := false
-	inHelp := false
-	manualQuit := false
-	footer := true
-	header := true
-
-	scanner := bufio.NewScanner(os.Stdin)
-
-	startTime := time.Now()
-
-	for !gameOver {
-		if inHelp {
-			fmt.Scanln()
-
-			inHelp = false
-		}
-
-		log.Println("clear:", *clear)
-		if *clear {
-			fmt.Println(dClear)
-		}
-
-		percentageDone := board.RevealedPercentage()
-
-		if percentageDone == 1 {
-			break
-		}
-
-		if header {
-			fmt.Println("Cells left: ", board.CellsNonRevealed())
-			fmt.Println("Flags: ", board.FlagsCount())
-			fmt.Println("Mines: ", board.NumMines)
-			fmt.Println(" ", util.FormatPercentageBar(percentageDone, *cols*3-2))
-		}
-
-		board.Display(false)
-
-		if footer {
-			fmt.Println("Enter command: (r <row> <col> = reveal, f <row> <col> = flag, h = help)")
-		} else {
-			fmt.Println()
-		}
-
-		// Read user input
-		if !scanner.Scan() {
-			fmt.Println("Error reading input.")
-
-			continue
-		}
-
-		input := scanner.Text()
-
-		var command string
-		var row, col int
-		var sIndex int
-
-		// Parse user input
-		_, err := fmt.Sscanf(input, "%s %d %d", &command, &row, &col)
-		if err != nil && err != io.EOF {
-			fmt.Println("Invalid input format.")
-			continue
-		}
-
-		command = strings.ToLower(command)
-
-		// Quick workaround for now
-		if command == "start" {
-			sIndex = row
-		}
-
-		if startIndex != nil {
-			// Convert to 0-based index
-			row -= *board.DisplayOptions.StartIndex
-			col -= *board.DisplayOptions.StartIndex
-		}
-
-		switch command {
-		case "r":
-			if board.Reveal(row, col) {
-				gameOver = true
-			}
-		case "c":
-			if board.Reveal(col, row) {
-				gameOver = true
-			}
-		case "f", "fr", "rf":
-			board.ToggleFlag(row, col)
-		case "fc", "cf":
-			board.ToggleFlag(col, row)
-		case "h", "help", "imlost":
-			if *clear {
-				fmt.Println(dClear)
-			}
-
-			printHelp()
-			inHelp = true
-		case "footer":
-			footer = !footer
-		case "header":
-			header = !header
-		case "ansi":
-			board.DisplayOptions.ANSI = util.BoolPtr(!*board.DisplayOptions.ANSI)
-		case "start":
-			board.DisplayOptions.StartIndex = util.IntPtr(sIndex)
-		case "cheat":
-			board.RevealAll()
-			gameOver = true
-		case "restart":
-			board = minesweeper.NewBoard(*rows, *cols, *mines, boardOptions, displayOptions)
-
-			startTime = time.Now()
-		case "q", "quit", "exit":
-			gameOver = true
-			manualQuit = true
-		default:
-			board.Printf("\x1b[41;37m%s\x1b[0m\n", "Invalid command!")
-		}
-	}
-
+func printStatistics(board *minesweeper.Board, startTime time.Time, config *Config, manualQuit bool) {
 	gameDuration := time.Since(startTime)
 	cellNonRevealed := board.CellsNonRevealed()
 	cellsRevealed := board.CellsRevealed()
 	flagCount := board.FlagsCount()
 	percentage := board.RevealedPercentage()
 
-	if *clear {
+	if config.clear {
 		fmt.Println(dClear)
 	}
 
@@ -233,11 +166,11 @@ func main() {
 	}
 
 	fmt.Printf("You completed %d/%d cells in %s (%.2f%%)\n", cellsRevealed, cellsRevealed+cellNonRevealed, util.FormatDuration(gameDuration), percentage*100)
-	fmt.Println("Seed:", *seed)
+	fmt.Println("Seed:", config.seed)
 	fmt.Println("")
-	fmt.Printf("Size: %d X %d\n", *rows, *cols)
-	fmt.Println("Amount of cells:", *rows**cols)
-	fmt.Println("Mines:", *mines)
+	fmt.Printf("Size: %d X %d\n", config.rows, config.cols)
+	fmt.Println("Amount of cells:", config.rows*config.cols)
+	fmt.Println("Mines:", config.mines)
 	fmt.Println("Cells revealed:", cellsRevealed)
 	fmt.Println("Cells left:", cellNonRevealed)
 	fmt.Println("Flags:", flagCount)
@@ -246,25 +179,238 @@ func main() {
 		return
 	}
 
-	// ALlow user to restart or quit
-	fmt.Println("Enter command: (r = retry same seed, q = quit)")
+	// Allow user to restart or quit
+	fmt.Println("Enter command: (r = retry same seed, rn = retry new seed, q = quit)")
 
+	scanner := bufio.NewScanner(os.Stdin)
 	if !scanner.Scan() {
 		fmt.Println("Error reading input.")
-
 		return
 	}
 
 	input := scanner.Text()
-
 	command := strings.ToLower(input)
 
 	switch command {
 	case "r", "restart":
-		main()
+		playGame(config)
+	case "rn", "restartnew":
+		config.seed = time.Now().UnixNano()
+		playGame(config)
 	case "q", "quit", "exit":
 		return
 	default:
 		fmt.Println("BYE!")
 	}
+}
+
+func parseInput(input string) (*Command, error) {
+	parts := strings.Fields(input)
+	if len(parts) == 0 {
+		return nil, fmt.Errorf("empty input")
+	}
+	return &Command{
+		Action: strings.ToLower(parts[0]),
+		Args:   parts[1:],
+	}, nil
+}
+
+func handleInput(input string, board *minesweeper.Board, config *Config) (gameOver, manualQuit bool) {
+	command, err := parseInput(input)
+	if err != nil {
+		fmt.Println("Invalid input format.")
+		return
+	}
+
+	switch command.Action {
+	case "r":
+		if handleReveal(command.Args, false, board, config) {
+			gameOver = true
+		}
+	case "c":
+		if handleReveal(command.Args, true, board, config) {
+			gameOver = true
+		}
+	case "f", "fr", "rf":
+		handleFlag(command.Args, false, board, config)
+	case "fc", "cf":
+		handleFlag(command.Args, true, board, config)
+	case "h", "help", "imlost":
+		if config.clear {
+			fmt.Println(dClear)
+		}
+
+		printHelp()
+	case "footer":
+		config.footer = !config.footer
+	case "header":
+		config.header = !config.header
+	case "ansi":
+		board.DisplayOptions.ANSI = util.BoolPtr(!*board.DisplayOptions.ANSI)
+	case "start":
+		var sIndex int
+		if _, err := fmt.Sscanf(strings.Join(command.Args, " "), "start %d", &sIndex); err != nil && err != io.EOF {
+			fmt.Println("Invalid input format.")
+			return
+		}
+
+		board.DisplayOptions.StartIndex = util.IntPtr(sIndex)
+	case "cheat":
+		board.RevealAll()
+		gameOver = true
+	case "q", "quit", "exit":
+		gameOver = true
+		manualQuit = true
+	default:
+		board.Printf("\x1b[41;37m%s\x1b[0m\n", "Invalid command!")
+	}
+
+	return
+}
+
+func handleReveal(args []string, inverted bool, board *minesweeper.Board, config *Config) (gameOver bool) {
+	if len(args) < 2 {
+		fmt.Println("Invalid input format")
+		return
+	}
+
+	x, err := strconv.Atoi(args[0])
+	if err != nil {
+		fmt.Println("Invalid input format")
+		return
+	}
+
+	y := make([]int, 0, len(args)-1)
+	for _, arg := range args[1:] {
+		num, err := strconv.Atoi(arg)
+		if err != nil {
+			fmt.Println("Invalid input format")
+			return
+		}
+		y = append(y, num)
+	}
+
+	// Convert to 0-based index
+	x -= *board.DisplayOptions.StartIndex
+
+	for _, yi := range y {
+		yi -= *board.DisplayOptions.StartIndex
+
+		// Determine the correct order of arguments for the board.Reveal function
+		row, col := x, yi
+		if inverted {
+			row, col = col, row
+		}
+
+		if board.Reveal(row, col) {
+			gameOver = true
+			break
+		}
+	}
+
+	return
+}
+
+func handleFlag(args []string, inverted bool, board *minesweeper.Board, config *Config) {
+	if len(args) < 2 {
+		fmt.Println("Invalid input format")
+		return
+	}
+
+	x, err := strconv.Atoi(args[0])
+	if err != nil {
+		fmt.Println("Invalid input format")
+		return
+	}
+
+	y := make([]int, 0, len(args)-1)
+	for _, arg := range args[1:] {
+		num, err := strconv.Atoi(arg)
+		if err != nil {
+			fmt.Println("Invalid input format")
+			return
+		}
+		y = append(y, num)
+	}
+
+	// Convert to 0-based index
+	x -= *board.DisplayOptions.StartIndex
+
+	for _, yi := range y {
+		yi -= *board.DisplayOptions.StartIndex
+
+		// Determine the correct order of arguments for the board.Reveal function
+		row, col := x, yi
+		if inverted {
+			row, col = col, row
+		}
+
+		board.ToggleFlag(row, col)
+	}
+}
+
+func playGame(config *Config) {
+	boardOptions := &minesweeper.BoardOptions{
+		Seed: config.seed,
+	}
+
+	displayOptions := &minesweeper.DisplayOptions{
+		StartIndex: &config.startIndex,
+		ANSI:       &config.ansi,
+
+		SymbolMine:   &config.symbolMine,
+		SymbolFlag:   &config.symbolFlag,
+		SymbolHidden: &config.symbolHidden,
+	}
+
+	board := minesweeper.NewBoard(config.rows, config.cols, config.mines, boardOptions, displayOptions)
+
+	gameOver := false
+	manualQuit := false
+
+	scanner := bufio.NewScanner(os.Stdin)
+
+	startTime := time.Now()
+
+	for !gameOver {
+		if config.clear {
+			fmt.Println(dClear)
+		}
+
+		percentageDone := board.RevealedPercentage()
+
+		if percentageDone == 1 {
+			break
+		}
+
+		printHeader(board, config)
+
+		board.Display(false)
+
+		printFooter(config)
+
+		// Read user input
+		if !scanner.Scan() {
+			fmt.Println("Error reading input.")
+			continue
+		}
+
+		input := scanner.Text()
+		gameOver, manualQuit = handleInput(input, board, config)
+	}
+
+	printStatistics(board, startTime, config, manualQuit)
+}
+
+func main() {
+	config := parseFlags()
+
+	if config.showHelp {
+		fmt.Println("Usage: minesweeper [OPTIONS]")
+		fmt.Println("Options:")
+		flag.PrintDefaults()
+		return
+	}
+
+	playGame(config)
 }

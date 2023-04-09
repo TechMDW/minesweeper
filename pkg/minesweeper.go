@@ -26,15 +26,12 @@ type Board struct {
 	DisplayOptions *DisplayOptions
 }
 
-// privateRand is a private random number generator
-// var privateRand = rand.New(rand.NewSource(time.Now().UnixNano()))
-
 // Symbols used to display the board
-var (
-	sMine      = "X"
-	sFlag      = "F"
-	sHidden    = "•"
-	sSeperator = "  "
+const (
+	SymbolMine      = "X"
+	SymbolFlag      = "F"
+	SymbolHidden    = "•"
+	SymbolSeperator = "  "
 )
 
 const (
@@ -48,6 +45,11 @@ type BoardOptions struct {
 type DisplayOptions struct {
 	StartIndex *int
 	ANSI       *bool
+
+	// Symbols used to display the board
+	SymbolMine   *string
+	SymbolFlag   *string
+	SymbolHidden *string
 }
 
 // NewBoard creates a new board with the given number of rows, columns, and mines.
@@ -223,6 +225,10 @@ func (b *Board) Display(showMines bool) {
 		startIndex = *b.DisplayOptions.StartIndex
 	}
 
+	symbolMine := *b.DisplayOptions.SymbolMine
+	symbolFlag := *b.DisplayOptions.SymbolFlag
+	symbolHidden := *b.DisplayOptions.SymbolHidden
+
 	for c := 0; c < b.Cols; c++ {
 		b.Printf("\x1b[34m%2d\x1b[0m ", c+startIndex)
 	}
@@ -238,7 +244,7 @@ func (b *Board) Display(showMines bool) {
 
 			if cell.IsRevealed {
 				if cell.IsMine {
-					b.Printf("\x1b[41m%s\x1b[0m%s", sMine, sSeperator)
+					b.Printf("\x1b[41m%s\x1b[0m%s", symbolMine, SymbolSeperator)
 				} else {
 					switch cell.MinesAround {
 					case 1:
@@ -261,11 +267,11 @@ func (b *Board) Display(showMines bool) {
 				}
 			} else {
 				if showMines && cell.IsMine {
-					b.Printf("\x1b[41m%s\x1b[0m%s", sMine, sSeperator)
+					b.Printf("\x1b[41m%s\x1b[0m%s", symbolMine, SymbolSeperator)
 				} else if cell.IsFlagged {
-					b.Printf("\x1b[91m%s\x1b[0m%s", sFlag, sSeperator)
+					b.Printf("\x1b[91m%s\x1b[0m%s", symbolFlag, SymbolSeperator)
 				} else {
-					b.Printf("\x1b[37m%s\x1b[0m%s", sHidden, sSeperator)
+					b.Printf("\x1b[37m%s\x1b[0m%s", symbolHidden, SymbolSeperator)
 				}
 			}
 		}
