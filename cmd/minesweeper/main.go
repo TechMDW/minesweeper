@@ -20,19 +20,24 @@ const (
 )
 
 type Config struct {
-	rows         int
-	cols         int
-	mines        int
-	footer       bool
-	header       bool
-	seed         int64
-	startIndex   int
-	ansi         bool
-	showHelp     bool
-	clear        bool
-	symbolMine   string
-	symbolFlag   string
-	symbolHidden string
+	rows            int
+	cols            int
+	mines           int
+	footer          bool
+	header          bool
+	seed            int64
+	startIndex      int
+	ansi            bool
+	showHelp        bool
+	clear           bool
+	topIndex        bool
+	bottomIndex     bool
+	rightIndex      bool
+	leftIndex       bool
+	symbolMine      string
+	symbolFlag      string
+	symbolHidden    string
+	symbolSeperator string
 }
 
 type Command struct {
@@ -116,6 +121,11 @@ func parseFlags() *Config {
 	symbolMine := flags.String("symbolMine", minesweeper.SymbolMine, "Symbol to use for mines")
 	symbolFlag := flags.String("symbolFlag", minesweeper.SymbolFlag, "Symbol to use for flags")
 	symbolHidden := flags.String("symbolHidden", minesweeper.SymbolHidden, "Symbol to use for hidden cells")
+	symbolSeperator := flags.String("symbolSeperator", minesweeper.SymbolSeperator, "Symbol to use for seperating cells")
+	topIndex := flags.Bool("topIndex", true, "Show top index")
+	bottomIndex := flags.Bool("bottomIndex", false, "Show bottom index")
+	rightIndex := flags.Bool("rightIndex", false, "Show right index")
+	leftIndex := flags.Bool("leftIndex", true, "Show left index")
 
 	// Default/Debug options
 	showHelp := flags.Bool("help", false, "Show help")
@@ -128,19 +138,24 @@ func parseFlags() *Config {
 	}
 
 	return &Config{
-		rows:         *rows,
-		cols:         *cols,
-		mines:        *mines,
-		seed:         *seed,
-		startIndex:   *startIndex,
-		ansi:         *ansi,
-		showHelp:     *showHelp,
-		clear:        *clear,
-		header:       *header,
-		footer:       *footer,
-		symbolMine:   *symbolMine,
-		symbolFlag:   *symbolFlag,
-		symbolHidden: *symbolHidden,
+		rows:            *rows,
+		cols:            *cols,
+		mines:           *mines,
+		seed:            *seed,
+		startIndex:      *startIndex,
+		ansi:            *ansi,
+		showHelp:        *showHelp,
+		clear:           *clear,
+		header:          *header,
+		footer:          *footer,
+		topIndex:        *topIndex,
+		bottomIndex:     *bottomIndex,
+		rightIndex:      *rightIndex,
+		leftIndex:       *leftIndex,
+		symbolMine:      *symbolMine,
+		symbolFlag:      *symbolFlag,
+		symbolHidden:    *symbolHidden,
+		symbolSeperator: *symbolSeperator,
 	}
 }
 
@@ -358,9 +373,15 @@ func playGame(config *Config) {
 		StartIndex: &config.startIndex,
 		ANSI:       &config.ansi,
 
-		SymbolMine:   &config.symbolMine,
-		SymbolFlag:   &config.symbolFlag,
-		SymbolHidden: &config.symbolHidden,
+		SymbolMine:      &config.symbolMine,
+		SymbolFlag:      &config.symbolFlag,
+		SymbolHidden:    &config.symbolHidden,
+		SymbolSeperator: &config.symbolSeperator,
+
+		TopIndex:    &config.topIndex,
+		LeftIndex:   &config.leftIndex,
+		RightIndex:  &config.rightIndex,
+		BottomIndex: &config.bottomIndex,
 	}
 
 	board := minesweeper.NewBoard(config.rows, config.cols, config.mines, boardOptions, displayOptions)

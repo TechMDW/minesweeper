@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"math/rand"
 	"reflect"
+	"time"
+
+	"github.com/TechMDW/minesweeper/internal/util"
 )
 
 // Cell represents a cell in a minesweeper board.
@@ -26,6 +29,25 @@ type Board struct {
 	DisplayOptions *DisplayOptions
 }
 
+type BoardOptions struct {
+	Seed int64
+}
+
+type DisplayOptions struct {
+	StartIndex  *int
+	ANSI        *bool
+	TopIndex    *bool
+	BottomIndex *bool
+	RightIndex  *bool
+	LeftIndex   *bool
+
+	// Symbols used to display the board
+	SymbolMine      *string
+	SymbolFlag      *string
+	SymbolHidden    *string
+	SymbolSeperator *string
+}
+
 // Symbols used to display the board
 const (
 	SymbolMine      = "X"
@@ -37,20 +59,6 @@ const (
 const (
 	dStartIndex = 1
 )
-
-type BoardOptions struct {
-	Seed int64
-}
-
-type DisplayOptions struct {
-	StartIndex *int
-	ANSI       *bool
-
-	// Symbols used to display the board
-	SymbolMine   *string
-	SymbolFlag   *string
-	SymbolHidden *string
-}
 
 // NewBoard creates a new board with the given number of rows, columns, and mines.
 //
@@ -65,6 +73,60 @@ func NewBoard(rows, cols, numMines int, boardOptions *BoardOptions, displayOptio
 		Rand:           rand.New(rand.NewSource(boardOptions.Seed)),
 		BoardOptions:   boardOptions,
 		DisplayOptions: displayOptions,
+	}
+
+	// Check if the display options are nil and set them to their default values
+	if board.DisplayOptions == nil {
+		board.DisplayOptions = &DisplayOptions{}
+	}
+
+	if board.DisplayOptions.StartIndex == nil {
+		board.DisplayOptions.StartIndex = util.IntPtr(1)
+	}
+
+	if board.DisplayOptions.ANSI == nil {
+		board.DisplayOptions.ANSI = util.BoolPtr(true)
+	}
+
+	if board.DisplayOptions.LeftIndex == nil {
+		board.DisplayOptions.LeftIndex = util.BoolPtr(true)
+	}
+
+	if board.DisplayOptions.RightIndex == nil {
+		board.DisplayOptions.RightIndex = util.BoolPtr(false)
+	}
+
+	if board.DisplayOptions.SymbolMine == nil {
+		board.DisplayOptions.SymbolMine = util.StringPtr(SymbolMine)
+	}
+
+	if board.DisplayOptions.SymbolFlag == nil {
+		board.DisplayOptions.SymbolFlag = util.StringPtr(SymbolFlag)
+	}
+
+	if board.DisplayOptions.SymbolHidden == nil {
+		board.DisplayOptions.SymbolHidden = util.StringPtr(SymbolHidden)
+	}
+
+	if board.DisplayOptions.SymbolSeperator == nil {
+		board.DisplayOptions.SymbolSeperator = util.StringPtr(SymbolSeperator)
+	}
+
+	if board.DisplayOptions.TopIndex == nil {
+		board.DisplayOptions.TopIndex = util.BoolPtr(true)
+	}
+
+	if board.DisplayOptions.BottomIndex == nil {
+		board.DisplayOptions.BottomIndex = util.BoolPtr(false)
+	}
+
+	// Check board options are nil and set them to their default values
+	if board.BoardOptions == nil {
+		board.BoardOptions = &BoardOptions{}
+	}
+
+	if board.BoardOptions.Seed == 0 {
+		board.BoardOptions.Seed = time.Now().UnixNano()
 	}
 
 	for i := 0; i < rows; i++ {
@@ -228,53 +290,79 @@ func (b *Board) Display(showMines bool) {
 	symbolMine := *b.DisplayOptions.SymbolMine
 	symbolFlag := *b.DisplayOptions.SymbolFlag
 	symbolHidden := *b.DisplayOptions.SymbolHidden
+	symbolSeperator := *b.DisplayOptions.SymbolSeperator
 
-	for c := 0; c < b.Cols; c++ {
-		b.Printf("\x1b[34m%2d\x1b[0m ", c+startIndex)
+	if *b.DisplayOptions.TopIndex {
+		for c := 0; c < b.Cols; c++ {
+			b.Printf("\x1b[34m%2d\x1b[0m ", c+startIndex)
+		}
 	}
 
 	// Print new line after the top row
 	fmt.Println()
 
 	for r := 0; r < b.Rows; r++ {
-		b.Printf("\x1b[34m%2d\x1b[0m| ", r+startIndex)
+		if *b.DisplayOptions.LeftIndex {
+			b.Printf("\x1b[34m%2d\x1b[0m| ", r+startIndex)
+		}
 
 		for c := 0; c < b.Cols; c++ {
 			cell := b.Cells[r][c]
 
+			seperator := symbolSeperator
+
+			if c == b.Cols-1 {
+				seperator = ""
+			}
+
 			if cell.IsRevealed {
 				if cell.IsMine {
-					b.Printf("\x1b[41m%s\x1b[0m%s", symbolMine, SymbolSeperator)
+					b.Printf("\x1b[41m%s\x1b[0m%s", symbolMine, seperator)
 				} else {
 					switch cell.MinesAround {
 					case 1:
-						b.Printf("\x1b[94m%d\x1b[0m  ", cell.MinesAround)
+						b.Printf("\x1b[94m%d\x1b[0m%s", cell.MinesAround, seperator)
 					case 2:
-						b.Printf("\x1b[32m%d\x1b[0m  ", cell.MinesAround)
+						b.Printf("\x1b[32m%d\x1b[0m%s", cell.MinesAround, seperator)
 					case 3:
-						b.Printf("\x1b[31m%d\x1b[0m  ", cell.MinesAround)
+						b.Printf("\x1b[31m%d\x1b[0m%s", cell.MinesAround, seperator)
 					case 4:
-						b.Printf("\x1b[34m%d\x1b[0m  ", cell.MinesAround)
+						b.Printf("\x1b[34m%d\x1b[0m%s", cell.MinesAround, seperator)
 					case 5:
-						b.Printf("\x1b[33m%d\x1b[0m  ", cell.MinesAround)
+						b.Printf("\x1b[33m%d\x1b[0m%s", cell.MinesAround, seperator)
 					case 6:
-						b.Printf("\x1b[36m%d\x1b[0m  ", cell.MinesAround)
+						b.Printf("\x1b[36m%d\x1b[0m%s", cell.MinesAround, seperator)
 					case 7:
-						b.Printf("\x1b[30m%d\x1b[0m  ", cell.MinesAround)
+						b.Printf("\x1b[30m%d\x1b[0m%s", cell.MinesAround, seperator)
 					default:
-						b.Printf("\x1b[90m%d\x1b[0m  ", cell.MinesAround)
+						b.Printf("\x1b[90m%d\x1b[0m%s", cell.MinesAround, seperator)
 					}
 				}
 			} else {
 				if showMines && cell.IsMine {
-					b.Printf("\x1b[41m%s\x1b[0m%s", symbolMine, SymbolSeperator)
+					b.Printf("\x1b[41m%s\x1b[0m%s", symbolMine, seperator)
 				} else if cell.IsFlagged {
-					b.Printf("\x1b[91m%s\x1b[0m%s", symbolFlag, SymbolSeperator)
+					b.Printf("\x1b[91m%s\x1b[0m%s", symbolFlag, seperator)
 				} else {
-					b.Printf("\x1b[37m%s\x1b[0m%s", symbolHidden, SymbolSeperator)
+					b.Printf("\x1b[37m%s\x1b[0m%s", symbolHidden, seperator)
 				}
 			}
 		}
+
+		if *b.DisplayOptions.RightIndex {
+			b.Printf(" |\x1b[34m%d\x1b[0m", r+startIndex)
+		}
+
+		fmt.Println()
+	}
+
+	if *b.DisplayOptions.BottomIndex {
+		fmt.Print("   ")
+
+		for c := 0; c < b.Cols; c++ {
+			b.Printf("\x1b[34m%2d\x1b[0m ", c+startIndex)
+		}
+
 		fmt.Println()
 	}
 }
