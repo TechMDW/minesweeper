@@ -194,6 +194,14 @@ func (b *Board) Reveal(row, col int) bool {
 	return false
 }
 
+func (b *Board) IsFlagged(row, col int) bool {
+	if row < 0 || row >= b.Rows || col < 0 || col >= b.Cols || b.Cells[row][col].IsRevealed {
+		return false
+	}
+
+	return b.Cells[row][col].IsFlagged
+}
+
 func (b *Board) CellsNonRevealed() int {
 	count := 0
 

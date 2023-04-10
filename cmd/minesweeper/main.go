@@ -317,6 +317,23 @@ func handleReveal(args []string, inverted bool, board *minesweeper.Board, config
 			row, col = col, row
 		}
 
+		if board.IsFlagged(row, col) {
+			board.Println("Are you sure you want to reveal a flagged cell? (y/N)")
+
+			scanner := bufio.NewScanner(os.Stdin)
+
+			if !scanner.Scan() {
+				fmt.Println("Error reading input.")
+				return
+			}
+
+			input := scanner.Text()
+
+			if strings.ToLower(input) != "y" {
+				continue
+			}
+		}
+
 		if board.Reveal(row, col) {
 			gameOver = true
 			break
