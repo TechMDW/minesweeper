@@ -1,4 +1,4 @@
-# Minesweeper CLI (Work In Progress)
+# Minesweeper CLI
 
 This is a command-line version of the classic Minesweeper game written in Go. Please note that this project is a work in progress (WIP) and may have some bugs or incomplete features.
 
